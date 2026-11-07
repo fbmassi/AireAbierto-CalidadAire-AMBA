@@ -1,0 +1,6 @@
+# Dependencias para el pipeline de datos en GitHub Actions (refresco diario).
+# Sin pin exacto: pip resuelve versiones compatibles con el Python del runner.
+# El resto de los scripts usan la librería estándar de Python.
+numpy
+scipy
+scikit-learn

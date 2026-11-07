@@ -1,0 +1,784 @@
+<meta charset="utf-8">
+<title>AireAbierto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  --bg:#eef2f5; --surface:#ffffff; --surface-2:#f6f9fb; --border:#d7e0e7;
+  --text:#14212b; --muted:#5b6b78; --accent:#0e7490; --accent-2:#0891b2;
+  --fire:#ea580c; --grid:#e6edf2;
+  --g-good:#16a34a; --g-accept:#ca8a04; --g-sens:#ea580c; --g-bad:#dc2626; --g-vbad:#7c3aed;
+  --shadow:0 1px 2px rgba(20,33,43,.06),0 4px 16px rgba(20,33,43,.05);
+  --radius:14px;
+}
+:root:not([data-theme="light"]){ }
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1620; --surface:#122330; --surface-2:#0f1d28; --border:#223a4c;
+    --text:#e7eff5; --muted:#8ba1b1; --accent:#22d3ee; --accent-2:#38bdf8;
+    --fire:#fb923c; --grid:#1b3042;
+    --g-good:#22c55e; --g-accept:#eab308; --g-sens:#fb923c; --g-bad:#ef4444; --g-vbad:#a78bfa;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.28);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1620; --surface:#122330; --surface-2:#0f1d28; --border:#223a4c;
+  --text:#e7eff5; --muted:#8ba1b1; --accent:#22d3ee; --accent-2:#38bdf8;
+  --fire:#fb923c; --grid:#1b3042;
+  --g-good:#22c55e; --g-accept:#eab308; --g-sens:#fb923c; --g-bad:#ef4444; --g-vbad:#a78bfa;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;line-height:1.5;
+  -webkit-font-smoothing:antialiased;}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 20px 56px;}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+
+/* header */
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
+.brand{display:flex;align-items:center;gap:12px;}
+.logo{width:40px;height:40px;border-radius:11px;background:
+  radial-gradient(circle at 30% 28%,var(--accent-2),var(--accent));
+  display:grid;place-items:center;box-shadow:var(--shadow);flex:none;}
+.logo svg{width:23px;height:23px;}
+.brand h1{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin:0;line-height:1;}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:.82rem;}
+.top-right{display:flex;align-items:center;gap:14px;}
+.updated{color:var(--muted);font-size:.74rem;text-align:right;}
+.updated b{color:var(--text);font-weight:600;}
+.toggle{border:1px solid var(--border);background:var(--surface);color:var(--text);
+  border-radius:9px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.8rem;display:flex;gap:6px;align-items:center;}
+.toggle:hover{border-color:var(--accent);}
+
+/* forecast banner */
+.banner{display:flex;align-items:stretch;gap:0;border-radius:var(--radius);overflow:hidden;
+  box-shadow:var(--shadow);margin-bottom:16px;border:1px solid var(--border);background:var(--surface);}
+.banner .stripe{width:8px;flex:none;}
+.banner .b-main{display:flex;align-items:center;justify-content:space-between;gap:20px;
+  padding:18px 22px;flex:1;flex-wrap:wrap;}
+.banner .lead{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:3px;}
+.banner .zone{font-size:1.18rem;font-weight:600;}
+.banner .big{display:flex;align-items:baseline;gap:9px;}
+.banner .big .v{font-size:2.6rem;font-weight:700;line-height:1;letter-spacing:-.02em;}
+.banner .big .u{color:var(--muted);font-size:.9rem;}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:999px;
+  font-weight:600;font-size:.86rem;color:#fff;}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.9);}
+
+/* kpi strip */
+.kpis{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;}
+.kpis .kpi{min-width:260px;flex:0 1 300px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);}
+.kpi .k-l{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);}
+.kpi .k-v{font-size:1.75rem;font-weight:700;margin-top:5px;letter-spacing:-.01em;display:flex;align-items:baseline;gap:6px;}
+.kpi .k-v small{font-size:.8rem;font-weight:500;color:var(--muted);}
+.kpi .k-sub{font-size:.74rem;color:var(--muted);margin-top:3px;}
+
+/* panel grid */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:18px 18px 16px;min-width:0;}
+.col-12{grid-column:span 12;} .col-7{grid-column:span 7;} .col-5{grid-column:span 5;}
+.col-6{grid-column:span 6;} .col-8{grid-column:span 8;} .col-4{grid-column:span 4;}
+.p-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px;}
+.p-head h2{font-size:1rem;font-weight:600;margin:0;letter-spacing:-.01em;}
+.p-head .tag{font-size:.68rem;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;
+  border:1px solid var(--border);border-radius:6px;padding:2px 7px;}
+.p-sub{color:var(--muted);font-size:.8rem;margin:0 0 12px;}
+.chart-box{position:relative;width:100%;}
+select{font:inherit;font-size:.8rem;background:var(--surface-2);color:var(--text);
+  border:1px solid var(--border);border-radius:8px;padding:5px 9px;cursor:pointer;}
+.segs{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;}
+.seg button{border:none;background:var(--surface);color:var(--muted);font:inherit;font-size:.78rem;
+  padding:5px 13px;cursor:pointer;border-right:1px solid var(--border);}
+.seg button:last-child{border-right:none;}
+.seg button.active{color:var(--accent);font-weight:600;background:var(--surface-2);box-shadow:inset 0 -2px 0 var(--accent);}
+.fc-meta{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:9px;font-size:.78rem;color:var(--muted);}
+.fc-meta .m b{color:var(--text);}
+.fc-op{margin-top:12px;padding:11px 14px;border:1px solid var(--accent);border-left-width:3px;border-radius:10px;
+  background:var(--surface-2);font-size:.82rem;line-height:1.5;}
+.fc-op .muted{color:var(--muted);}
+.sub-h{display:flex;align-items:baseline;gap:10px;margin:22px 0 2px;padding-top:16px;border-top:1px solid var(--border);
+  font-size:.82rem;font-weight:600;color:var(--text);letter-spacing:-.01em;}
+.sub-h .tag{font-size:.64rem;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start;}
+@media(max-width:760px){.two-col{grid-template-columns:1fr;}}
+.conf{padding:3px 10px;border-radius:999px;font-weight:600;font-size:.68rem;color:#fff;
+  text-transform:uppercase;letter-spacing:.04em;}
+
+/* map */
+.map-wrap{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+#lmap{display:none;width:100%;height:360px;background:#0b1620;}
+.leaflet-container{font-family:inherit;}
+.sat-lbl{background:rgba(11,22,32,.82);color:#fff;border:none;border-radius:5px;
+  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;padding:2px 6px;box-shadow:none;}
+.sat-lbl:before{display:none!important;}
+#map{display:block;width:100%;height:auto;}
+.map-legend{display:flex;align-items:flex-start;gap:10px;margin-top:10px;font-size:.72rem;color:var(--muted);}
+.ramp-wrap{flex:1;}
+.ramp{height:9px;border-radius:5px;
+  background:linear-gradient(90deg,#ffe86e,#feba46,#fc782d,#eb2d19,#b00026);}
+.ramp-ticks{display:flex;justify-content:space-between;font-size:.64rem;margin-top:3px;}
+.datebar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:2px 0 12px;}
+.datebar .dlbl{font-size:.78rem;color:var(--muted);}
+input[type=date]{font:inherit;font-size:.8rem;background:var(--surface-2);color:var(--text);
+  border:1px solid var(--border);border-radius:8px;padding:5px 9px;}
+.qbtn{font:inherit;font-size:.74rem;background:var(--surface);color:var(--muted);
+  border:1px solid var(--border);border-radius:8px;padding:5px 11px;cursor:pointer;}
+.qbtn:hover{border-color:var(--accent);color:var(--accent);}
+.selbox{font:inherit;font-size:.78rem;background:var(--surface-2);color:var(--text);
+  border:1px solid var(--border);border-radius:8px;padding:5px 9px;cursor:pointer;max-width:100%;}
+.selbox:hover{border-color:var(--accent);}
+.dslider{width:100%;margin:-2px 0 4px;accent-color:var(--accent);cursor:pointer;}
+.alert-main{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  border:1px solid var(--border);border-left-width:5px;border-radius:12px;padding:16px 18px;
+  background:var(--surface-2);margin-bottom:12px;}
+.am-date{font-size:.78rem;color:var(--muted);}
+.am-pm{font-size:1.9rem;font-weight:700;line-height:1.1;}
+.am-pm span{font-size:.8rem;font-weight:500;color:var(--muted);}
+.am-rec{font-size:.82rem;color:var(--muted);margin-top:5px;max-width:460px;}
+.am-lvl{font-size:.9rem;font-weight:700;color:#fff;padding:7px 15px;border-radius:999px;white-space:nowrap;}
+.pol-row{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:12px;margin-top:12px;}
+.pol-name{font-weight:600;font-size:.95rem;}
+.pol-val{font-size:1.15rem;font-weight:700;}
+.pol-val small{font-size:.72rem;font-weight:500;color:var(--muted);}
+.pol-adv{font-size:.8rem;color:var(--muted);line-height:1.4;margin:2px 0 6px 82px;}
+.hdr-date{font:inherit;font-size:.82rem;background:var(--surface-2);color:var(--text);
+  border:1px solid var(--border);border-radius:7px;padding:2px 7px;}
+.suscri{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+.mail-in{font:inherit;font-size:.82rem;background:var(--surface-2);color:var(--text);
+  border:1px solid var(--border);border-radius:8px;padding:6px 10px;min-width:180px;}
+.mail-msg{font-size:.78rem;color:var(--muted);}
+
+/* ica bars */
+.ica-row{display:grid;grid-template-columns:150px 1fr 58px;align-items:center;gap:10px;margin:7px 0;font-size:.82rem;}
+.ica-track{height:14px;background:var(--surface-2);border-radius:7px;overflow:hidden;}
+.ica-fill{height:100%;border-radius:7px;}
+.ica-row .pct{text-align:right;color:var(--muted);}
+
+/* metrics table */
+table{width:100%;border-collapse:collapse;font-size:.82rem;}
+th,td{text-align:right;padding:7px 8px;border-bottom:1px solid var(--border);}
+th:first-child,td:first-child{text-align:left;}
+thead th{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;}
+tbody tr:last-child td{border-bottom:none;}
+td.best{color:var(--accent);font-weight:600;}
+
+/* alerts feed */
+.feed{display:flex;flex-direction:column;gap:7px;}
+.alert{display:grid;grid-template-columns:86px 1fr auto;align-items:center;gap:12px;
+  padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font-size:.82rem;}
+.alert .date{color:var(--muted);}
+.alert .rec{color:var(--muted);font-size:.76rem;}
+.lvl{font-size:.72rem;font-weight:600;padding:3px 9px;border-radius:999px;color:#fff;white-space:nowrap;}
+
+.note{font-size:.78rem;color:var(--muted);line-height:1.6;}
+.note b{color:var(--text);}
+footer{margin-top:22px;padding-top:16px;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:.75rem;color:var(--muted);}
+footer .src b{color:var(--text);font-weight:600;}
+.legend-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+
+@media (max-width:860px){
+  .kpis{grid-template-columns:repeat(2,1fr);}
+  .col-7,.col-5,.col-6,.col-8,.col-4{grid-column:span 12;}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+          <path d="M3 9h11a2.5 2.5 0 1 0-2.5-2.5"/><path d="M3 14h15a2.5 2.5 0 1 1-2.5 2.5"/><path d="M3 19h8"/>
+        </svg>
+      </div>
+      <div>
+        <h1>AireAbierto</h1>
+        <p>Monitoreo y pronóstico de calidad del aire · Área Metropolitana de Buenos Aires</p>
+      </div>
+    </div>
+    <div class="top-right">
+      <div class="updated">datos al<br><b id="updated">—</b></div>
+      <button class="toggle" id="updateBtn" hidden aria-label="Actualizar datos"><span>⟳</span><span id="updateTxt">Actualizar datos</span></button>
+      <button class="toggle" id="themeBtn" aria-label="Cambiar tema"><span id="themeIco">☾</span><span id="themeTxt">Oscuro</span></button>
+    </div>
+  </header>
+
+  <!-- próximo pronóstico -->
+  <div class="banner">
+    <div class="stripe" id="bannerStripe"></div>
+    <div class="b-main">
+      <div>
+        <div class="lead" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Pronóstico PM10 (modelo) · <span class="seg" id="bannerLocSeg"></span></div>
+        <div class="zone" id="nextDate">—</div>
+      </div>
+      <div class="big"><span class="v mono" id="nextVal">—</span><span class="u">µg/m³ PM10</span></div>
+      <div class="chip" id="nextChip"><span class="dot"></span><span id="nextLvl">—</span></div>
+    </div>
+  </div>
+
+
+  <!-- paneles -->
+  <div class="grid">
+
+    <section class="panel col-12">
+      <div class="p-head"><h2>Alertas de PM10 por email</h2></div>
+      <p class="p-sub">Mirá el PM10 por fecha (por defecto, <b>el día siguiente</b>) y suscribite para recibir el aviso diario automático cuando supere el umbral. Hoy y los días recientes son <b>pronóstico del modelo</b>; los anteriores, medición real.</p>
+      <div class="two-col">
+        <div>
+          <div class="datebar"><span class="dlbl">Fecha:</span><input type="date" id="mailDate"></div>
+          <input type="range" id="mailSlider" class="dslider" min="0" step="1" value="0" aria-label="Fecha">
+          <div id="mailPreview"></div>
+        </div>
+        <div>
+          <h3 class="sub-h" style="margin-top:0;padding-top:0;border-top:none">Suscribirse</h3>
+          <p class="p-sub">Recibís el aviso automático diario según <b>dónde vivís</b>: el modelo estima el PM10 de tu zona interpolando desde las estaciones con medición.</p>
+          <div class="datebar"><span class="dlbl">Tu zona:</span><select id="mailLoc" class="selbox"></select></div>
+          <div class="suscri" style="margin-top:0;border-top:none;padding-top:0">
+            <input type="email" id="mailInput" class="mail-in" placeholder="tu@correo.com">
+            <button class="qbtn" id="mailBtn">📧 Suscribirme</button>
+            <span id="mailMsg" class="mail-msg"></span>
+          </div>
+          <p class="note" style="margin-top:14px">Umbral de aviso sobre el PM10 <b>pronosticado</b>: <b>Precaución &gt; 30</b> · <b>Alerta &gt; 40 µg/m³</b> (bajados respecto de los niveles de salud 40/50 porque el modelo subestima los picos; así el aviso llega a tiempo). La estimación por zona es aproximada (interpolación desde 3 estaciones).</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel col-12">
+      <div class="p-head"><h2 id="fcTitle">Pronóstico PM10 a 24 h · La Boca</h2><div class="seg" id="locSeg"></div></div>
+      <p class="p-sub" id="fcSub">Predicho vs. real.</p>
+      <p class="note" style="margin:-6px 0 10px">Modelo entrenado en las <b>3 estaciones con medición real</b> (La Boca, Centenario, Córdoba). El mapa interpola su predicción sobre el AMBA; las zonas lejanas a esas estaciones son <b>extrapolación</b>.</p>
+      <div class="datebar"><span class="dlbl">Desde:</span><input type="date" id="fcFrom"><span class="dlbl">Hasta:</span><input type="date" id="fcTo"></div>
+      <div class="chart-box" style="height:248px"><canvas id="fcChart"></canvas></div>
+      <div id="fcOp" class="fc-op" hidden></div>
+
+      <h3 class="sub-h">Desempeño del modelo <span class="tag">cambia según la estación</span></h3>
+      <div class="fc-meta" id="fcMeta"></div>
+
+      <h3 class="sub-h">Qué más influye en el modelo <span class="tag">importancia</span></h3>
+      <p class="p-sub" id="impSub">Peso de cada variable en la predicción (Random Forest).</p>
+      <div class="chart-box" style="height:300px"><canvas id="impChart"></canvas></div>
+    </section>
+
+    <section class="panel col-12">
+      <div class="p-head"><h2>Mapa hiperlocal · PM10</h2></div>
+      <p class="p-sub">PM10 <b>predicho por el modelo</b> interpolado (IDW) sobre el AMBA, con satélite de fondo. Elegí la fecha. Zonas lejanas a las 3 estaciones son extrapolación.</p>
+      <div class="datebar"><span class="dlbl">Fecha:</span><input type="date" id="dateSel"></div>
+      <input type="range" id="dateSlider" class="dslider" min="0" step="1" value="0" aria-label="Deslizá para cambiar la fecha">
+      <div class="map-wrap"><div id="lmap"></div><canvas id="map" width="560" height="360"></canvas></div>
+      <div class="map-legend">
+        <div class="ramp-wrap"><div class="ramp"></div>
+          <div class="ramp-ticks mono"><span>0</span><span>25</span><span>50</span><span>75</span><span>100+</span></div></div>
+        <span class="mono" id="mapUnit" style="align-self:flex-start">µg/m³</span>
+      </div>
+    </section>
+
+    <section class="panel col-12">
+      <div class="p-head"><h2>Calidad del aire y validación del modelo</h2></div>
+      <div class="two-col">
+        <div>
+          <h3 class="sub-h" style="margin-top:0;padding-top:0;border-top:none">Índice de Calidad del Aire</h3>
+          <p class="p-sub" id="icaSub">Qué porcentaje de los días cayó en cada categoría del ICA (según el PM10 promedio de 24 h).</p>
+          <div id="icaBars"></div>
+          <p class="note" style="margin-top:10px">Categoría por día (PM10 prom. 24 h, escala AQI de la US-EPA): <b style="color:var(--g-good)">Buena</b> ≤ 54 · <b style="color:var(--g-sens)">Aceptable</b> 55–154 · <b style="color:var(--g-bad)">Dañina (sensibles)</b> 155–254 µg/m³.</p>
+        </div>
+        <div>
+          <h3 class="sub-h" style="margin-top:0;padding-top:0;border-top:none">Validación extendida <span class="tag">PM10</span></h3>
+          <p class="p-sub">El <b>modelo operativo de PM10</b> en La Boca (en vivo). MAE en µg/m³ (menor = mejor); R² = cuánto explica (0–1, mayor = mejor), evaluado fuera de muestra.</p>
+          <table id="metrics"></table>
+          <p class="note" id="holdoutNote" style="margin-top:12px"></p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="src"><b>Fuentes (abiertas y gratuitas):</b> CAMS &amp; ERA5 (Open-Meteo) · estaciones APrA (Buenos Aires Data) · focos NASA FIRMS</div>
+    <div>Prototipo · Seminario 2 — Tecnología aplicada a una problemática ambiental</div>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="data.js"></script>
+<script src="pollutants_data.js"></script>
+<script>
+const D = window.DASHBOARD_DATA || {};
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const ICA_BP = [[0,50,"Buena","--g-good"],[51,100,"Aceptable","--g-accept"],
+  [101,150,"Dañina (grupos sensibles)","--g-sens"],[151,200,"Dañina","--g-bad"],
+  [201,500,"Muy dañina","--g-vbad"]];
+function icaCat(v){ for(const [lo,hi,cat,tok] of ICA_BP){ if(v<=hi) return {cat,color:css(tok)}; } return {cat:"Peligrosa",color:css("--g-vbad")}; }
+function nivelColor(n){ return n==="ALERTA"?css("--g-bad"):(n==="Precaución"?css("--g-sens"):css("--g-good")); }
+
+/* ---------- header / banner ---------- */
+document.getElementById("updated").textContent = D.generado || "—";
+/* el banner se renderiza en init() con renderBanner() — estimación de HOY (CAMS) */
+
+/* ---------- KPIs (se arman en init, con los valores de HOY) ---------- */
+function aqiFromPM10(pm){
+  const bp=[[0,54,0,50],[55,154,51,100],[155,254,101,150],[255,354,151,200],[355,424,201,300],[425,604,301,500]];
+  for(const [clo,chi,ilo,ihi] of bp){ if(pm<=chi) return Math.round((ihi-ilo)/(chi-clo)*(pm-clo)+ilo); }
+  return 500;
+}
+function renderKPIs(){
+  const box=document.getElementById("kpis"); if(!box) return;
+  const P=window.POLLUTANTS||{}, ff=(P.laboca&&P.laboca.pm10&&P.laboca.pm10.forecast_full)||null;
+  const dias = (ff&&ff.pred) ? ff.pred.filter(v=>v!=null&&v>40).length : "—";
+  const cards=[
+    {l:"Días sobre umbral · La Boca", v:dias, sub:"PM10 predicho por el modelo > 40 µg/m³ (umbral de Alerta)"}
+  ];
+  box.innerHTML=cards.map(c=>`
+    <div class="kpi">
+      <div class="k-l">${c.l}</div>
+      <div class="k-v mono">${c.color?`<span style="color:${c.color}">${c.v}</span>`:c.v}${c.u?`<small>${c.u}</small>`:""}</div>
+      <div class="k-sub">${c.sub??""}</div>
+    </div>`).join("");
+}
+
+/* ---------- ICA bars ---------- */
+(function(){
+  const dist = (D.ica&&D.ica.dist)||[];
+  document.getElementById("icaBars").innerHTML = dist.map(d=>`
+    <div class="ica-row">
+      <span><span class="legend-dot" style="background:${d.color}"></span>${d.cat}</span>
+      <div class="ica-track"><div class="ica-fill" style="width:${Math.max(d.pct,1.5)}%;background:${d.color}"></div></div>
+      <span class="pct mono">${d.pct}%</span>
+    </div>`).join("");
+  document.getElementById("icaSub").textContent =
+    `Distribución de ${D.ica?D.ica.ica.length:0} días según el ICA (basado en PM10, prom. 24 h).`;
+})();
+
+/* ---------- metrics table ---------- */
+(function(){
+  const P = window.POLLUTANTS || {}; const a = D.alert||{};
+  const lb = P.laboca && P.laboca.pm10;   // el modelo de PM10 en La Boca
+  let html = `<thead><tr><th>PM10 · La Boca</th><th>MAE µg/m³</th><th>R²</th></tr></thead><tbody>`;
+  if(lb && lb.metrics){
+    html += `<tr><td>Modelo operativo <small>(en vivo)</small></td><td class="mono best">${lb.metrics.mae}</td><td class="mono">${lb.metrics.r2}</td></tr>`;
+  }
+  html += `</tbody>`;
+  document.getElementById("metrics").innerHTML = html;
+  const h = D.holdout||{};
+  document.getElementById("holdoutNote").innerHTML =
+    `<b>Holdout espacial:</b> estimando una estación <b>sin su sensor</b> (solo meteo + CAMS + fuego) el error global es `+
+    `<b class="mono">${h.global?h.global.mae:"—"} µg/m³</b> (R² ${h.global?h.global.r2:"—"}). `+
+    `Aviso: detecta ${a.detectados}/${a.eventos} días realmente elevados (&gt;${a.nivel_real} µg/m³)`+
+    `${a.pod!=null?` · ${Math.round(a.pod*100)}% captados`:""}.`;
+})();
+
+/* ---------- (las alertas ahora se muestran por fecha; ver el bloque de mapa) ---------- */
+
+/* ---------- charts (Chart.js) ---------- */
+const POL = window.POLLUTANTS || {};        // POL[estacion][contaminante]
+let curLoc = Object.keys(POL)[0] || "laboca";
+let bannerLoc = curLoc;                       // estación del banner (pronóstico PM10 del modelo)
+let curPol = "pm10";
+let fcChart, impChart;
+function tkc(){ return {txt:css("--text"),muted:css("--muted"),grid:css("--grid"),accent:css("--accent"),fire:css("--fire")}; }
+function confLabel(r2){
+  if(r2>=0.5) return {t:"confiabilidad moderada",c:css("--g-accept")};
+  if(r2>=0.3) return {t:"confiabilidad limitada",c:css("--g-sens")};
+  return {t:"sin poder predictivo",c:css("--g-bad")};
+}
+function syncFcDates(){   // alinea el rango de fechas a la estación actual (la serie llega hasta mañana)
+  const st=POL[curLoc], p=st&&st[curPol], ff=p&&(p.forecast_full||p.forecast);
+  const a=document.getElementById("fcFrom"), b=document.getElementById("fcTo");
+  if(!ff||!a||!b) return;
+  const d0=ff.dates[0], d1=ff.dates[ff.dates.length-1];
+  a.min=b.min=d0; a.max=b.max=d1; a.value=d0; b.value=d1;
+}
+function renderPollutant(){
+  const st=POL[curLoc]; const p=st&&st[curPol]; if(!p||typeof Chart==="undefined") return; const t=tkc();
+  const title=document.getElementById("fcTitle"); if(title) title.textContent=`Pronóstico PM10 a 24 h · ${st.label}`;
+  if(p.insufficient){
+    if(fcChart)fcChart.destroy(); if(impChart)impChart.destroy();
+    document.getElementById("fcSub").textContent=`${p.label} en ${st.label}: sin datos suficientes para un modelo honesto.`;
+    document.getElementById("fcMeta").innerHTML=""; const oe=document.getElementById("fcOp"); if(oe)oe.hidden=true; return;
+  }
+  Chart.defaults.font.family='"IBM Plex Sans",sans-serif'; Chart.defaults.color=t.muted;
+  if(fcChart)fcChart.destroy();
+  const ff = p.forecast_full||p.forecast, mx = p.metrics, imp = p.importance;
+  const cut=ff.cut||ff.dates[ff.dates.length-1];
+  const from=(document.getElementById("fcFrom")||{}).value||ff.dates[0];
+  const to  =(document.getElementById("fcTo")||{}).value||ff.dates[ff.dates.length-1];
+  const Lb=[],PR=[],R=[];
+  for(let i=0;i<ff.dates.length;i++){ const d=ff.dates[i]; if(d<from||d>to) continue;
+    Lb.push(d); PR.push(ff.pred[i]); R.push(ff.real?ff.real[i]:null); }
+  fcChart=new Chart(document.getElementById("fcChart"),{type:"line",
+    data:{labels:Lb,datasets:[
+      {label:"real (medido)",data:R,borderColor:t.txt,borderWidth:1.4,pointRadius:0,tension:.25,spanGaps:true},
+      {label:"predicho (modelo)",data:PR,borderColor:t.accent,borderWidth:2,pointRadius:0,tension:.25,spanGaps:true}]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+      plugins:{legend:{labels:{color:t.txt,boxWidth:12,usePointStyle:true}}},
+      scales:{x:{grid:{display:false},ticks:{color:t.muted,maxTicksLimit:7,maxRotation:0}},
+        y:{grid:{color:t.grid},ticks:{color:t.muted},title:{display:true,text:p.unit,color:t.muted}}}}});
+  document.getElementById("fcSub").textContent =
+    `PM10 en ${st.label}: pronóstico del modelo operativo (en vivo), evaluado fuera de muestra desde ${cut}.`;
+  document.getElementById("fcMeta").innerHTML=
+    `<span class="m">MAE <b class="mono">${mx.mae} ${p.unit}</b></span>`+
+    `<span class="m">RMSE <b class="mono">${mx.rmse}</b></span>`+
+    `<span class="m">R² <b class="mono">${mx.r2}</b></span>`+
+    `<span class="m">vs CAMS crudo <b class="mono">${mx.persist_mae}</b></span>`;
+  const opEl=document.getElementById("fcOp");
+  if(opEl){
+    if(p.next){
+      opEl.hidden=false;
+      opEl.innerHTML=`🛰️ <b>Pronóstico para mañana (${fmtDMY(p.next.fecha)}):</b> `+
+        `<b class="mono">~${p.next.val} µg/m³ PM10</b> · `+
+        `<span class="muted">pronóstico del modelo operativo (en vivo).</span>`;
+    } else { opEl.hidden=true; opEl.innerHTML=""; }
+  }
+  if(impChart)impChart.destroy();
+  impChart=new Chart(document.getElementById("impChart"),{type:"bar",
+    data:{labels:imp.map(x=>x.feat),datasets:[{data:imp.map(x=>x.imp),backgroundColor:t.accent,borderRadius:4}]},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:t.grid},ticks:{color:t.muted}},y:{grid:{display:false},ticks:{color:t.txt}}}}});
+  const is=document.getElementById("impSub"); if(is) is.textContent=`Peso de cada variable para predecir ${p.label}${useOp?" (modelo operativo)":""} (Random Forest).`;
+}
+function buildCharts(){
+  if(typeof Chart==="undefined") return;
+  renderPollutant();
+}
+/* selector de ubicación (estaciones reales) — solo PM10 */
+(function(){
+  const locSeg=document.getElementById("locSeg"); if(!locSeg) return;
+  curPol="pm10";
+  locSeg.innerHTML=Object.keys(POL).map(k=>`<button type="button" data-k="${k}" class="${k===curLoc?"active":""}">${POL[k].label}</button>`).join("");
+  locSeg.addEventListener("click",e=>{const b=e.target.closest("button"); if(!b)return;
+    curLoc=b.dataset.k; [...locSeg.children].forEach(x=>x.classList.toggle("active",x===b));
+    syncFcDates(); renderPollutant();});
+})();
+
+/* ---------- fecha compartida (mapa + alertas) ---------- */
+const MS = window.MODEL_MAP || {dates:[]};              // mapa = PM10 del MODELO en las 3 estaciones
+const ICA = D.ica || {dates:[],pm10:[],ica:[]};
+const PUN = (window.MODEL_MAP&&MODEL_MAP.puntos)||[];    // 3 estaciones (La Boca es índice 0)
+const TODAY_D = (D.generado && MS.dates.indexOf(D.generado)>=0) ? D.generado : (MS.dates[MS.dates.length-1]||"");
+let curDate = TODAY_D;
+let mapPol = "pm10";                                  // mapa: solo PM10
+let satOK=false, lmap=null, heatOverlay=null, markerLayer=null;
+
+const POLS = {
+  pm10:{label:"PM10", unit:"µg/m³", maxMap:100, umb:{prec:30,alert:40},  /* bajados ~10 vs. salud (50/40): el modelo subestima los picos; coincide con alerta_mail.py */
+    adv:{Normal:"Aire bueno: sin restricciones.",
+         "Precaución":"Grupos sensibles (asma, niños, mayores): moderar la actividad intensa al aire libre.",
+         ALERTA:"Evitar el ejercicio al aire libre; grupos de riesgo, en interiores con ventanas cerradas."}},
+};
+const nivOrder={"Normal":0,"Precaución":1,"ALERTA":2};
+function nivelPol(pol,v){ const u=POLS[pol].umb;
+  const n = v>u.alert?"ALERTA":(v>u.prec?"Precaución":"Normal");
+  const c = n==="ALERTA"?css("--g-bad"):(n==="Precaución"?css("--g-sens"):css("--g-good"));
+  return {n,c,adv:POLS[pol].adv[n]}; }
+function camsVal(d,pol){ const i=MS.dates.indexOf(d), arr=MS[pol]; return (i>=0&&arr&&arr[i][0]!=null)?arr[i][0]:null; }  // La Boca = índice 0
+function pmRealEst(d){ const i=ICA.dates.indexOf(d);
+  if(i>=0) return {v:ICA.pm10[i], fuente:"medido"};
+  const e=camsVal(d,"pm10"); return {v:e, fuente:e!=null?"estimado":null}; }
+/* helpers de fechas para los desplegables */
+function isoShift(d,days){ const t=new Date(d+"T00:00:00"); t.setDate(t.getDate()+days); return t.toISOString().slice(0,10); }
+function peakDate(dates,arr){ let bi=-1,bv=-Infinity; for(let i=0;i<(arr||[]).length;i++){ const v=arr[i]; if(v!=null&&v>bv){bv=v;bi=i;} } return bi<0?null:dates[bi]; }
+function fmtDMY(d){ const p=d.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
+
+const BBOX={lonW:-58.95,lonE:-57.80,latS:-35.00,latN:-34.40};
+// costa del Río de la Plata (aprox), de NO a SE, en lon/lat
+const COSTA=[[-58.62,-34.40],[-58.45,-34.49],[-58.37,-34.59],[-58.29,-34.67],[-58.18,-34.75],[-58.00,-34.82],[-57.86,-34.88]];
+const RAMP=[[0,[255,232,110]],[25,[254,186,70]],[50,[252,120,45]],[75,[235,45,25]],[100,[176,0,38]]];  // más saturado (se nota en días limpios)
+function rampColor(v, max){
+  v=Math.max(0,Math.min(100,(v/(max||100))*100)); v=Math.round(v/10)*10;   // escala por contaminante
+  for(let i=1;i<RAMP.length;i++){ if(v<=RAMP[i][0]){
+    const [a,ca]=RAMP[i-1],[b,cb]=RAMP[i],t=(v-a)/(b-a);
+    return ca.map((c,j)=>Math.round(c+(cb[j]-c)*t)); }}
+  return RAMP[RAMP.length-1][1];
+}
+const toXY=(lon,lat,W,H)=>[ (lon-BBOX.lonW)/(BBOX.lonE-BBOX.lonW)*W, (BBOX.latN-lat)/(BBOX.latN-BBOX.latS)*H ];
+function isDark(){ const a=document.documentElement.getAttribute("data-theme");
+  return a==="dark" || (!a && matchMedia("(prefers-color-scheme:dark)").matches); }
+
+/* ---- modo SATÉLITE real (Esri) con el calor transparente encima; solo local + online ---- */
+function heatDataURL(vals, max){
+  const W=440,H=290, cv=document.createElement("canvas"); cv.width=W; cv.height=H; const ctx=cv.getContext("2d");
+  const img=ctx.createImageData(W,H),data=img.data;
+  const xy=PUN.map(p=>[ (p.lon-BBOX.lonW)/(BBOX.lonE-BBOX.lonW)*W, (BBOX.latN-p.lat)/(BBOX.latN-BBOX.latS)*H ]);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){ let num=0,den=0;
+    for(let i=0;i<PUN.length;i++){ if(vals[i]==null)continue; let d=Math.hypot(x-xy[i][0],y-xy[i][1]); d=d<1?1:d; const w=1/Math.pow(d,2.5); num+=w*vals[i]; den+=w; }
+    const v=den?num/den:0, c=rampColor(v,max), o=(y*W+x)*4; data[o]=c[0];data[o+1]=c[1];data[o+2]=c[2];data[o+3]=255; }
+  ctx.putImageData(img,0,0); return cv.toDataURL();
+}
+function initSat(){
+  if(typeof L==="undefined" || /claudeusercontent|claude\.site|\.artifacts\./.test(location.hostname)) return false;  // satélite on en local/Netlify/Pages; off solo en el artifact (CSP bloquea tiles)
+  const el=document.getElementById("lmap"); if(!el) return false;
+  try{
+    el.style.display="block"; document.getElementById("map").style.display="none";
+    lmap=L.map(el,{attributionControl:true});
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      {maxZoom:18, attribution:"Imagery © Esri"}).addTo(lmap);
+    const B=L.latLngBounds([[BBOX.latS,BBOX.lonW],[BBOX.latN,BBOX.lonE]]);
+    lmap.fitBounds(B);
+    markerLayer=L.layerGroup().addTo(lmap);
+    const fix=()=>{ try{ lmap.invalidateSize(); lmap.fitBounds(B); }catch(e){} };
+    setTimeout(fix,300); setTimeout(fix,900);
+    addEventListener("resize",()=>setTimeout(fix,200));
+    satOK=true; return true;
+  }catch(e){ el.style.display="none"; document.getElementById("map").style.display="block"; return false; }
+}
+function updateSat(){
+  if(!satOK||!lmap) return;
+  const idx=MS.dates.indexOf(curDate), arr=MS[mapPol]||[], vals=idx>=0?arr[idx]:PUN.map(()=>null), max=POLS[mapPol].maxMap;
+  const url=heatDataURL(vals,max), bounds=[[BBOX.latS,BBOX.lonW],[BBOX.latN,BBOX.lonE]];
+  if(heatOverlay) heatOverlay.setUrl(url);
+  else heatOverlay=L.imageOverlay(url,bounds,{opacity:0.82,interactive:false}).addTo(lmap);
+  markerLayer.clearLayers();
+  PUN.forEach((p,i)=>{ const v=vals[i], col=v==null?"#777":`rgb(${rampColor(v,max).join(",")})`;
+    L.circleMarker([p.lat,p.lon],{radius:6,color:"#fff",weight:2,fillColor:col,fillOpacity:1})
+      .bindTooltip(`${p.nombre} ${v==null?"s/d":v}`,{permanent:true,direction:"top",className:"sat-lbl"}).addTo(markerLayer); });
+}
+
+function drawMap(){
+  if(satOK){ updateSat(); return; }                 // si hay satélite, lo usa
+  const cv=document.getElementById("map"),ctx=cv.getContext("2d"); const W=cv.width,H=cv.height;
+  const idx=MS.dates.indexOf(curDate);
+  const arr=MS[mapPol]||[], max=POLS[mapPol].maxMap;
+  const vals = idx>=0 ? arr[idx] : PUN.map(()=>null);
+  const dark=isDark();
+  const land =dark?"#20313b":"#dde6e1";    // tierra
+  const water=dark?"#1c4150":"#b4d6e8";    // río (más celeste, se distingue)
+  const coast=dark?"#52788c":"#6fa3bb";
+  const traceWater=()=>{ COSTA.forEach((p,i)=>{const [x,y]=toXY(p[0],p[1],W,H); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    let g=toXY(-57.80,-34.88,W,H); ctx.lineTo(g[0],g[1]); g=toXY(-57.80,-34.40,W,H); ctx.lineTo(g[0],g[1]); ctx.closePath(); };
+  ctx.clearRect(0,0,W,H);
+  const _c=toXY(-58.45,-34.60,W,H);                          // tierra: urbano (gris) → verde suburbano
+  const _lg=ctx.createRadialGradient(_c[0],_c[1],18,_c[0],_c[1],Math.max(W,H)*0.78);
+  if(dark){ _lg.addColorStop(0,"#2c3a44"); _lg.addColorStop(.5,"#243528"); _lg.addColorStop(1,"#1b2a1f"); }
+  else    { _lg.addColorStop(0,"#c3c9c2"); _lg.addColorStop(.5,"#cdd8bd"); _lg.addColorStop(1,"#c6d8b2"); }
+  ctx.fillStyle=_lg; ctx.fillRect(0,0,W,H);
+  ctx.beginPath(); traceWater(); ctx.fillStyle=water; ctx.fill();   // río (NE)
+  // mapa de calor (offscreen) interpolado
+  const off=document.createElement("canvas"); off.width=W; off.height=H; const octx=off.getContext("2d");
+  const img=octx.createImageData(W,H),data=img.data; const xy=PUN.map(p=>toXY(p.lon,p.lat,W,H));
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){ let num=0,den=0;
+    for(let i=0;i<PUN.length;i++){ if(vals[i]==null)continue; let d=Math.hypot(x-xy[i][0],y-xy[i][1]); d=d<1?1:d; const w=1/Math.pow(d,2.5); num+=w*vals[i]; den+=w; }
+    const v=den?num/den:0, c=rampColor(v,max), o=(y*W+x)*4; data[o]=c[0];data[o+1]=c[1];data[o+2]=c[2];data[o+3]=255; }
+  octx.putImageData(img,0,0);
+  // recortar el calor a la TIERRA (el río queda azul)
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,H); traceWater(); ctx.clip("evenodd");
+  ctx.globalAlpha=0.86; ctx.drawImage(off,0,0); ctx.globalAlpha=1; ctx.restore();
+  ctx.beginPath();                                            // trazo de costa
+  COSTA.forEach((p,i)=>{const [x,y]=toXY(p[0],p[1],W,H); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+  ctx.strokeStyle=coast; ctx.lineWidth=2.5; ctx.stroke();
+  ctx.textAlign="center";                                     // estaciones
+  PUN.forEach((p,i)=>{ const [px,py]=xy[i];
+    ctx.beginPath();ctx.arc(px,py,4.5,0,7);ctx.fillStyle="#0b1620";ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#fff";ctx.stroke();
+    const lbl=p.nombre+" "+(vals[i]!=null?vals[i]:"s/d"); ctx.font='600 11px "IBM Plex Mono",monospace';
+    const w=ctx.measureText(lbl).width, ly=py>24?py-9:py+18;
+    ctx.fillStyle="rgba(11,22,32,.74)"; ctx.fillRect(px-w/2-5,ly-11,w+10,15);
+    ctx.fillStyle="#fff"; ctx.fillText(lbl,px,ly+1);
+  });
+}
+
+/* nivel + consejo por contaminante (PM10, NO₂, CO) */
+function filaPol(pol, v, est){
+  if(v==null) return `<div class="pol-row"><span class="pol-name">${POLS[pol].label}</span><span class="pol-val mono">s/d</span><span class="lvl" style="background:${css("--muted")}">s/d</span></div>`;
+  const nv=nivelPol(pol,v);
+  return `<div class="pol-row"><span class="pol-name">${POLS[pol].label}</span>`+
+    `<span class="pol-val mono">${est?"~":""}${v} <small>${POLS[pol].unit}</small></span>`+
+    `<span class="lvl" style="background:${nv.c}">${nv.n}</span></div>`+
+    `<div class="pol-adv">${nv.adv}</div>`;
+}
+function renderAlert(){
+  const box=document.getElementById("alertCard"); if(!box) return;
+  const pm=pmRealEst(curDate);
+  const vals=[["pm10",pm.v,pm.fuente==="estimado"]];
+  let peor="Normal", peorC=css("--g-good");
+  vals.forEach(([pol,v])=>{ if(v!=null){ const nv=nivelPol(pol,v); if(nivOrder[nv.n]>nivOrder[peor]){peor=nv.n;peorC=nv.c;} }});
+  const fte = pm.fuente==="medido" ? "PM10 medido" : (pm.fuente?"pronóstico del modelo":"sin dato");
+  box.innerHTML=`<div class="alert-main" style="border-left-color:${peorC};align-items:flex-start">
+    <div style="width:100%">
+      <div class="am-date mono" style="margin-bottom:12px">${curDate} · <span style="color:var(--muted)">${fte}</span></div>
+      ${vals.map(([pol,v,est])=>filaPol(pol,v,est)).join("")}
+    </div></div>`;
+}
+function updateLegend(){
+  const P=POLS[mapPol], m=P.maxMap;
+  const fmt=x=> x>=1000 ? (x/1000).toFixed(x>=10000?0:1).replace(/\.0$/,"")+"k" : Math.round(x);
+  const ts=document.querySelectorAll(".ramp-ticks span");
+  if(ts.length>=5){ ts[0].textContent="0"; ts[1].textContent=fmt(m*0.25); ts[2].textContent=fmt(m*0.5); ts[3].textContent=fmt(m*0.75); ts[4].textContent=fmt(m)+"+"; }
+  const u=document.getElementById("mapUnit"); if(u) u.textContent=P.unit;
+}
+function renderBanner(){
+  const q=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
+  const stn=POL[bannerLoc], nx=stn&&stn.pm10&&stn.pm10.next;
+  if(!nx){ q("nextDate","sin pronóstico"); q("nextVal","—"); q("nextLvl","—"); return; }
+  const nv=nivelPol("pm10", nx.val);
+  q("nextDate", fmtDMY(nx.fecha) + " · predicho por el modelo");
+  q("nextVal", "~"+nx.val); q("nextLvl", nv.n);
+  const chip=document.getElementById("nextChip"); if(chip) chip.style.background=nv.c;
+  const st=document.getElementById("bannerStripe"); if(st) st.style.background=nv.c;
+}
+/* selector de estación del banner */
+(function(){
+  const seg=document.getElementById("bannerLocSeg"); if(!seg||!window.POLLUTANTS) return;
+  seg.innerHTML=Object.keys(POL).map(k=>`<button type="button" data-k="${k}" class="${k===bannerLoc?"active":""}">${POL[k].label}</button>`).join("");
+  seg.addEventListener("click",e=>{const b=e.target.closest("button"); if(!b)return;
+    bannerLoc=b.dataset.k; [...seg.children].forEach(x=>x.classList.toggle("active",x===b)); renderBanner();});
+})();
+
+function setDate(d){ if(!d) return; curDate=d;
+  ["dateSel","dateSel2","dateSel0"].forEach(id=>{const e=document.getElementById(id); if(e) e.value=d;});
+  const i=MS.dates.indexOf(d);
+  ["dateSlider","dateSlider2"].forEach(id=>{const s=document.getElementById(id); if(s&&i>=0) s.value=i;});
+  drawMap(); renderAlert(); renderBanner(); }
+
+/* controles de fecha (mapa + alertas, sincronizados) */
+(function(){
+  const nearest=(d)=> MS.dates.indexOf(d)>=0 ? d :
+    MS.dates.reduce((b,x)=>Math.abs(new Date(x)-new Date(d))<Math.abs(new Date(b)-new Date(d))?x:b, MS.dates[0]);
+  const setup=(inpId,slId)=>{
+    const inp=document.getElementById(inpId);
+    if(inp){ if(MS.dates.length){ inp.min=MS.dates[0]; inp.max=MS.dates[MS.dates.length-1]; } inp.value=curDate;
+      inp.addEventListener("change",e=>{ if(e.target.value) setDate(nearest(e.target.value)); }); }
+    const sl=document.getElementById(slId);
+    if(sl && MS.dates.length){ sl.max=MS.dates.length-1; sl.value=Math.max(0,MS.dates.indexOf(curDate));
+      sl.addEventListener("input",e=>setDate(MS.dates[+e.target.value])); }
+  };
+  setup("dateSel0",null); setup("dateSel","dateSlider"); setup("dateSel2","dateSlider2");
+  const bind=(id,fn)=>{const b=document.getElementById(id); if(b) b.addEventListener("click",fn);};
+  const hoy=()=>setDate(TODAY_D), humo=()=>setDate("2022-08-19");
+  bind("qHumo",humo); bind("qHumo2",humo); bind("qHoy",hoy); bind("qHoy2",hoy);
+  updateLegend();   // mapa fijo en PM10 (sin selector de contaminante)
+})();
+
+/* desplegable reutilizable: días que tienen alerta (para probar) */
+function fillAlertDays(sel, onPick){
+  if(!sel) return;
+  const al=[], pr=[];
+  MS.dates.forEach(d=>{
+    let worst="Normal",info="";
+    [["pm10",pmRealEst(d).v]].forEach(([pol,v])=>{
+      if(v==null) return; const nv=nivelPol(pol,v);
+      if(nivOrder[nv.n]>nivOrder[worst]){ worst=nv.n; info=POLS[pol].label+" "+v+" "+POLS[pol].unit; }
+    });
+    if(worst==="ALERTA") al.push({d,info}); else if(worst==="Precaución") pr.push({d,info});
+  });
+  al.reverse(); pr.reverse();   // más recientes primero
+  const opt=o=>`<option value="${o.d}">${fmtDMY(o.d)} · ${o.info}</option>`;
+  sel.innerHTML=`<option value="">— elegí un día con alerta —</option>`+
+    (al.length?`<optgroup label="🔴 Alerta (${al.length})">`+al.map(opt).join("")+`</optgroup>`:"")+
+    (pr.length?`<optgroup label="🟠 Precaución (${pr.length})">`+pr.map(opt).join("")+`</optgroup>`:"");
+  sel.addEventListener("change",e=>{ if(e.target.value) onPick(e.target.value); });
+}
+fillAlertDays(document.getElementById("alertPreset"), setDate);
+
+/* tarjeta de alerta para una fecha dada (reutilizable: panel de mail) */
+function tarjetaAlerta(d){
+  const pm=pmRealEst(d);
+  const vals=[["pm10",pm.v,pm.fuente==="estimado"]];
+  let peor="Normal", peorC=css("--g-good");
+  vals.forEach(([pol,v])=>{ if(v!=null){const nv=nivelPol(pol,v); if(nivOrder[nv.n]>nivOrder[peor]){peor=nv.n;peorC=nv.c;}}});
+  const fte=pm.fuente==="medido"?"PM10 medido":(pm.fuente?"pronóstico del modelo":"sin dato");
+  return `<div class="alert-main" style="border-left-color:${peorC};align-items:flex-start"><div style="width:100%">`+
+    `<div class="am-date mono" style="margin-bottom:12px">${d} · <span style="color:var(--muted)">${fte}</span></div>`+
+    vals.map(([pol,v,e])=>filaPol(pol,v,e)).join("")+`</div></div>`;
+}
+
+/* preview de PM10 por fecha */
+(function(){
+  const di=document.getElementById("mailDate"), pv=document.getElementById("mailPreview"), sl=document.getElementById("mailSlider");
+  if(!di||!pv) return;
+  const lo=MS.dates[0], hi=MS.dates[MS.dates.length-1];
+  const nearest=d=> MS.dates.indexOf(d)>=0 ? d :
+    MS.dates.reduce((b,x)=>Math.abs(new Date(x)-new Date(d))<Math.abs(new Date(b)-new Date(d))?x:b, lo);
+  if(MS.dates.length){ di.min=lo; di.max=hi; if(sl) sl.max=MS.dates.length-1; }
+  let manana=isoShift(TODAY_D,1); if(MS.dates.indexOf(manana)<0) manana=TODAY_D;
+  function setD(d){ d=nearest(d); di.value=d; const i=MS.dates.indexOf(d); if(sl&&i>=0) sl.value=i; pv.innerHTML=tarjetaAlerta(d); }
+  setD(manana);
+  di.addEventListener("change",e=>{ if(e.target.value) setD(e.target.value); });
+  if(sl) sl.addEventListener("input",e=>{ setD(MS.dates[+e.target.value]); });
+})();
+
+/* zonas para suscribirse (el modelo estima cada una interpolando desde las 3 estaciones) */
+const LOCS=[
+  {id:"laboca",     name:"La Boca (CABA)",            lat:-34.6253, lon:-58.3664},
+  {id:"centenario", name:"Caballito / Centro-oeste",  lat:-34.6066, lon:-58.4321},
+  {id:"cordoba",    name:"Microcentro / Retiro",      lat:-34.5996, lon:-58.3916},
+  {id:"sanisidro",  name:"San Isidro / Zona norte",   lat:-34.4708, lon:-58.5126},
+  {id:"moreno",     name:"Moreno / Zona oeste",       lat:-34.6534, lon:-58.7920},
+  {id:"laplata",    name:"La Plata / Zona sur",       lat:-34.9205, lon:-57.9536},
+];
+/* suscripción por mail (con zona) */
+(function(){
+  const mb=document.getElementById("mailBtn"), mi=document.getElementById("mailInput"),
+        mm=document.getElementById("mailMsg"), ml=document.getElementById("mailLoc");
+  if(ml) ml.innerHTML=LOCS.map(o=>`<option value="${o.id}">${o.name}</option>`).join("");
+  if(mb && mi){
+    mb.addEventListener("click", async ()=>{
+      const email=(mi.value||"").trim();
+      const loc=LOCS.find(x=>x.id===(ml?ml.value:"laboca"))||LOCS[0];
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ mm.textContent="Ingresá un correo válido."; return; }
+      mm.textContent="Suscribiendo…"; mb.disabled=true;
+      try{
+        const r=await fetch("/suscribir",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email, loc})});
+        const j=await r.json();
+        mm.textContent = (j&&j.ok)
+          ? ("✓ Suscripto a " + loc.name + "." + (j.bienvenida ? " Te mandamos la confirmación por correo." : ""))
+          : ("No se pudo: "+((j&&j.error)||"error"));
+      }catch(e){ mm.textContent="Sin backend (funciona solo en el panel local)."; }
+      mb.disabled=false;
+    });
+  }
+})();
+
+/* rango de fechas del gráfico de pronóstico */
+(function(){
+  const a=document.getElementById("fcFrom"), b=document.getElementById("fcTo");
+  if(!a||!b) return;
+  syncFcDates();
+  const reb=()=>{ try{renderPollutant();}catch(e){} };
+  a.addEventListener("change",reb); b.addEventListener("change",reb);
+})();
+
+/* ---------- theme ---------- */
+function applyThemeLabel(){
+  const dark=document.documentElement.getAttribute("data-theme")==="dark" ||
+    (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme:dark)").matches);
+  document.getElementById("themeIco").textContent=dark?"☀":"☾";
+  document.getElementById("themeTxt").textContent=dark?"Claro":"Oscuro";
+}
+document.getElementById("themeBtn").addEventListener("click",()=>{
+  const cur=document.documentElement.getAttribute("data-theme");
+  const dark=cur==="dark"||(!cur&&matchMedia("(prefers-color-scheme:dark)").matches);
+  document.documentElement.setAttribute("data-theme",dark?"light":"dark");
+  applyThemeLabel();buildCharts();drawMap();renderAlert();renderBanner();
+});
+
+/* botón de actualización — solo visible cuando el panel corre localmente (con backend) */
+(function(){
+  const local = ["localhost","127.0.0.1"].includes(location.hostname);
+  const btn = document.getElementById("updateBtn"); if(!btn) return;
+  if(!local) return;                         // en el link publicado queda oculto
+  btn.hidden = false;
+  const txt = document.getElementById("updateTxt");
+  btn.addEventListener("click", async ()=>{
+    btn.disabled = true; txt.textContent = "Actualizando… (1–2 min)";
+    try{
+      const r = await fetch("/actualizar", {method:"POST"});
+      const j = await r.json();
+      if(j && j.ok){ txt.textContent = "✓ Listo, recargando…"; setTimeout(()=>location.reload(), 900); }
+      else { txt.textContent = "Error — reintentar"; btn.disabled = false; }
+    }catch(e){ txt.textContent = "Sin backend — reintentar"; btn.disabled = false; }
+  });
+})();
+
+/* init */
+applyThemeLabel();
+initSat();
+drawMap(); renderAlert(); renderBanner(); renderKPIs();
+try{ buildCharts(); }catch(e){ console.warn("Chart.js no disponible:",e.message); }
+let rt; addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{
+  drawMap(); try{buildCharts();}catch(e){} },180);});
+</script>

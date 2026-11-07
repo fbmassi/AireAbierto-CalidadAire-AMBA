@@ -1,0 +1,4 @@
+﻿id;nombre;descripcion
+1;CO;MonÃ³xido de Carbono (en ppm - partes por millÃ³n) - Promedio mÃ³vil 8 horas - promedio de las 8 horas anteriores
+2;NO2;DiÃ³xido de NitrÃ³geno (en ppb - part per billon  - miles de millones) - Promedio horario correspondiente a los 60 minutos anteriores.
+3;PM10;Material Particulado respirable menor a 10 micrones (en Âµg/m3 â microgramo por metro cÃºbico) - Promedio mÃ³vil 24  horas - promedio 24 horas anteriores

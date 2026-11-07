@@ -79,5 +79,8 @@ export async function addSub(email, loc) {
   return subs;
 }
 
-export const hoyISO = () => new Date().toISOString().slice(0, 10);
-export const mananaISO = () => new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+// Fechas en hora de Argentina (como en local). Netlify corre en UTC: desde las 21:00 ART
+// el "hoy" UTC ya es el día siguiente y "mañana" caía fuera de los datos del modelo.
+const fechaAR = (ms) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date(ms));
+export const hoyISO = () => fechaAR(Date.now());
+export const mananaISO = () => fechaAR(Date.now() + 86400000);

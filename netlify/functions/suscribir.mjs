@@ -16,13 +16,18 @@ export default async (req) => {
   let bienvenida = false;
   try {
     const mapa = await cargarModelo();
-    const est = estimaciones(mapa, loc.lat, loc.lon, [[mananaISO(), "mañana"]]);
+    let est = estimaciones(mapa, loc.lat, loc.lon, [[mananaISO(), "mañana"]]);
+    if (!est.length) {   // sin pronóstico para mañana (datos sin actualizar): usar el último día disponible
+      const ult = (mapa.dates || []).at(-1);
+      if (ult) est = estimaciones(mapa, loc.lat, loc.lon, [[ult, "último pronóstico"]]);
+    }
+    if (!est.length) console.warn(`suscribir: sin pronóstico para ${mananaISO()} — no se envía bienvenida`);
     if (est.length) {
       const { asunto, cuerpo } = construirMail(loc.name, est, { bienvenida: true });
       await enviarMail([email], asunto, cuerpo);
       bienvenida = true;
     }
-  } catch (e) { /* best-effort */ }
+  } catch (e) { console.error("suscribir: no se pudo enviar la bienvenida:", e); }
 
   return Response.json({ ok: true, bienvenida });
 };

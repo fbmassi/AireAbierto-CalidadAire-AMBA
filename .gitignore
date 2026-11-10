@@ -1,0 +1,26 @@
+# === SECRETOS (nunca subir) ===
+# .env: credenciales SMTP + FIRMS (la fuente de verdad local)
+.env
+# config_mail.json: lista de suscriptos (correos), privado
+scripts/config_mail.json
+# notas locales con enlaces/tokens de administración (nunca subir)
+*.local.txt
+# (.env.example SÍ se versiona: solo tiene placeholders)
+
+# === Entornos / cachés ===
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+.netlify/
+
+# === Datos CRUDOS: pesados y 100% regenerables (los re-descarga el pipeline) ===
+data/raw/
+
+# data/processed/ SÍ se versiona a propósito: es la entrada del modelo y el
+# fallback si una descarga falla. Crece lento (un día por corrida) y no lo
+# re-commitea el job diario, así que no infla el historial.
+
+# === Logs locales ===
+data/alerta_diaria.log

@@ -1,0 +1,22 @@
+# Netlify — AireAbierto
+# Sitio estático (el dashboard) + funciones serverless para suscribir/enviar
+# + función programada para el aviso diario.
+
+[build]
+  publish = "dashboard"
+  functions = "netlify/functions"
+  command = ""           # no hay build; se publica dashboard/ tal cual
+
+[build.environment]
+  # El único secreto real es MAIL_PASS (se sigue vigilando). Host/puerto/correo
+  # no son secretos y pueden aparecer en la documentación sin romper el build.
+  SECRETS_SCAN_OMIT_KEYS = "MAIL_HOST,MAIL_PORT,MAIL_USER,MAIL_FROM"
+
+# El frontend hace fetch("/suscribir"): lo mapeamos a la función serverless.
+[[redirects]]
+  from = "/suscribir"
+  to = "/.netlify/functions/suscribir"
+  status = 200
+
+# Los datos se refrescan automáticamente con GitHub Actions (1×/día); no hay
+# botón ni endpoint de actualización manual en el sitio publicado.

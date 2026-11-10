@@ -1,0 +1,43 @@
+name: Actualización diaria de datos
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: datos-diarios
+  cancel-in-progress: false
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    env:
+      TZ: America/Argentina/Buenos_Aires
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache-dependency-path: requirements-deploy.txt
+      - name: Instalar dependencias
+        run: pip install -r requirements-deploy.txt
+      - name: Actualizar datos
+        env:
+          FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+        run: |
+          export AIRE_END=$(date +%F)
+          export AIRE_AQ_END=$(date -d "+2 days" +%F)
+          python scripts/download_data.py        || echo "Open-Meteo no respondió"
+          bash   scripts/download_caba_oficial.sh || echo "CABA no respondió"
+          python scripts/download_firms.py        || echo "FIRMS saltado"
+          python scripts/build_dataset_modelo.py
+          python scripts/ica.py
+          python scripts/patch_panel.py
+          python scripts/export_pollutants.py
+      - name: Commit de datos
+        run: |
+          git config user.name  "Franco Baltasar Massi"
+          git config user.email "francomassi1@gmail.com"
+          git add dashboard/data.js dashboard/pollutants_data.js 2>/dev/null || true
+          if git diff --cached --quiet; then echo "Sin cambios."; else
+            git commit -m "datos: actualización automática $(date +%F)"; git push; fi

@@ -1,0 +1,58 @@
+[
+  {
+    "fecha_pronostico": "2026-10-16",
+    "zona": "La Boca (CABA)",
+    "pm10_pronosticado": 14.4,
+    "supera_umbral": false,
+    "nivel": "Normal",
+    "recomendacion": "Sin restricciones"
+  },
+  {
+    "fecha_pronostico": "2026-10-17",
+    "zona": "La Boca (CABA)",
+    "pm10_pronosticado": 19.3,
+    "supera_umbral": false,
+    "nivel": "Normal",
+    "recomendacion": "Sin restricciones"
+  },
+  {
+    "fecha_pronostico": "2026-10-18",
+    "zona": "La Boca (CABA)",
+    "pm10_pronosticado": 20.8,
+    "supera_umbral": false,
+    "nivel": "Normal",
+    "recomendacion": "Sin restricciones"
+  },
+  {
+    "fecha_pronostico": "2026-10-19",
+    "zona": "La Boca (CABA)",
+    "pm10_pronosticado": 19.8,
+    "supera_umbral": false,
+    "nivel": "Normal",
+    "recomendacion": "Sin restricciones"
+  },
+  {
+    "fecha_pronostico": "2026-10-20",
+    "zona": "La Boca (CABA)",
+    "pm10_pronosticado": 20.9,
+    "supera_umbral": false,
+    "nivel": "Normal",
+    "recomendacion": "Sin restricciones"
+  },
+  {
+    "fecha_pronostico": "2026-10-21",
+    "zona": "La Boca (CABA)",
+    "pm10_pronosticado": 19.5,
+    "supera_umbral": false,
+    "nivel": "Normal",
+    "recomendacion": "Sin restricciones"
+  },
+  {
+    "fecha_pronostico": "2026-10-22",
+    "zona": "La Boca (CABA)",
+    "pm10_pronosticado": 19.0,
+    "supera_umbral": false,
+    "nivel": "Normal",
+    "recomendacion": "Sin restricciones"
+  }
+]
